@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<project name="ChromeAddon" default="compile" basedir=".">
+
+	<!-- Arguments to gwtc and devmode targets -->
+	<property name="gwt.args" value="" />
+
+	<property name="web.module" location="web/module" />
+
+	<property file="local-build.properties" />
+	<property file="build.properties" />
+
+	<path id="project.class.path">
+		<pathelement location="${gwt.sdk}/gwt-user.jar" />
+		<fileset dir="${gwt.sdk}" includes="gwt-dev*.jar" />
+	</path>
+
+	<target name="gwtc" description="GWT compile to JavaScript">
+		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
+			<classpath>
+				<pathelement location="java" />
+				<path refid="project.class.path" />
+			</classpath>
+			<!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
+			<jvmarg value="-Xmx256M" />
+
+			<arg line="-war ${web.module}" />
+
+			<!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
+			<arg line="${gwt.args}" />
+			<!--
+	        <arg line="-style PRETTY"/>
+        	<arg line="-extra temp/extra"/>
+        	<arg line="-draftCompile"/>
+        	-->
+
+			<arg value="com.broceliand.pearlbar.chrome.Popup" />
+			<arg value="com.broceliand.pearlbar.chrome.Background" />
+		</java>
+	</target>
+
+	<target name="compile" depends="gwtc" description="Compile for unpacked use" />
+
+	<target name="substitute" description="Substitute default strings">
+
+		<replaceregexp file="web/manifest.json" encoding="UTF-8"
+			match="/\*@version\*/.*/\*@/version\*/" flags="s"
+			replace="&quot;${addon.version}&quot;" />
+
+		<replace file="web/options.html" encoding="UTF-8" token="@@addon.version@@" value="${addon.version}" />
+
+	</target>
+
+	<target name="clean" description="Clean this project">
+		<delete dir="web/module" failonerror="false" />
+	</target>
+
+	<target name="package" depends="substitute, compile" description="Package this project">
+		<delete dir="${web.module}" includes="**/hosted.*" />
+
+		<zip destfile="Pearltrees-Chrome-Addon-${addon.version}.zip" basedir="web" />
+	</target>
+
+</project>

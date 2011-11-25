@@ -1,0 +1,37 @@
+{
+ 	"name": "Pearltrees",
+	"description": "A place to organize, discover and share everything you like on the web.",
+	"version": /*@version*/ "0.1" /*@/version*/,
+	"icons": {
+		"48": "image/icon48.png",
+		"128": "image/icon128.png"
+	},
+
+	"permissions": [
+		/*@perm*/
+		"http://*/",
+		/*@mrep*/
+		"tabs"
+	],
+
+	"browser_action": {
+		"default_icon": "image/button/in.png",
+		"default_title": "Pearltrees",
+		"popup": "popup.html"
+	},
+
+	"background_page": "background.html",
+
+	"content_scripts": [
+		{
+			"matches": [
+				/*@match*/
+				"http://*/*"
+				/*@hctam*/
+			],
+			"js": ["script/content.js"]
+		}
+	],
+
+	"options_page": "options.html"
+}

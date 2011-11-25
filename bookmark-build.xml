@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<project name="Bookmark" default="local" basedir=".">
+
+	<property file="local-build.properties" />
+	<property name="build.target" location="../../server/oyster/web/collector/bookmark" />
+
+	<!-- Arguments to gwtc and devmode targets -->
+	<property name="gwt.args" value="" />
+	<property name="web.module" location="${build.target}/module" />
+
+	<path id="project.class.path">
+		<pathelement location="${gwt.sdk}/gwt-user.jar" />
+		<fileset dir="${gwt.sdk}" includes="gwt-dev*.jar" />
+	</path>
+
+	<target name="gwtc" description="GWT compile to JavaScript">
+		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
+			<classpath>
+				<pathelement location="java" />
+				<path refid="project.class.path" />
+			</classpath>
+			<!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
+			<jvmarg value="-Xmx256M" />
+
+			<arg line="-war ${web.module}" />
+
+			<!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
+			<arg line="${gwt.args}" />
+			<!--
+	        <arg line="-style PRETTY"/>
+        	<arg line="-extra temp/extra"/>
+        	<arg line="-draftCompile"/>
+        	-->
+
+			<arg value="com.broceliand.pearlbar.chrome.Bookmark" />
+		</java>
+	</target>
+
+	<target name="compile" depends="gwtc" description="Compile for unpacked use" />
+
+	<target name="local" depends="compile" description="Compile to server" if="gwt.sdk">
+		<copy todir="${build.target}">
+			<fileset dir="web">
+				<include name="**/*.css"/>
+				<include name="**/*.png"/>
+                <include name="**/*.gif"/>
+				<include name="**/*.js"/>
+				<exclude name="module/**"/>
+			</fileset>
+		</copy>
+
+	  	<condition property="domain.replaced.bookmarklet.js" value="document.domain=&quot;${web.domain.base}&quot;;" else="">
+	  		<isset property="web.domain.base"/>
+	  	</condition>
+	    <replace file="${build.target}/script/bookmarklet.js" token="/*domainScriptReplace*/" value="${domain.replaced.bookmarklet.js}" />
+	</target>
+
+	<target name="deploy" description="Deploy to server" if="gwt.sdk">
+		<antcall target="local" />
+	</target>
+
+</project>

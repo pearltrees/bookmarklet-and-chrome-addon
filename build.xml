@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<project name="ChromeAddon" default="compile" basedir=".">
+
+	<property file="build.properties" />
+	<property name="build.dir" location="build" />
+	<property name="source.zip" location="${build.dir}/Pearltrees-Chrome-Addon-${addon.version}-source.zip" />
+	<property name="source.zip.oyster" location="../../server/oyster/web/collector/chrome_extension_${addon.version}_source.zip" />
+
+	<target name="compile" description="Compile for unpacked use">
+		<ant antfile="build-public.xml" />
+	</target>
+
+	<target name="export" description="">
+		<delete dir="${build.dir}" failonerror="false" />
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${build.dir}/java" />
+		<mkdir dir="${build.dir}/web" />
+
+		<copy todir="${build.dir}/java">
+			<fileset dir="java">
+				<include name="**/*.java"/>
+				<include name="**/*.xml"/>
+				<exclude name="**/Bookmark*"/>
+			</fileset>
+		</copy>
+
+		<copy todir="${build.dir}/web">
+			<fileset dir="web">
+				<include name="**/*.html"/>
+				<include name="**/*.css"/>
+				<include name="**/*.js"/>
+				<include name="**/*.json"/>
+				<include name="**/*.png"/>
+				<include name="**/*.txt"/>
+				<exclude name="module/**"/>
+				<exclude name="**/bookmarklet.js"/>
+			</fileset>
+		</copy>
+
+		<property name="server.url.permissions" value="${server.url}" />
+		<replaceregexp file="${build.dir}/web/manifest.json" encoding="UTF-8"
+			match="/\*@perm\*/.*/\*@mrep\*/" flags="s"
+			replace="&quot;${server.url.permissions}&quot;," />
+
+		<property name="server.url.matches" value="${server.url}*" />
+		<replaceregexp file="${build.dir}/web/manifest.json" encoding="UTF-8"
+			match="/\*@match\*/.*/\*@hctam\*/" flags="s"
+			replace="&quot;${server.url.matches}&quot;" />
+
+		<replaceregexp file="${build.dir}/web/script/addon.js" encoding="UTF-8"
+			match="/\*@url\*/.*/\*@end\*/" flags="s"
+			replace="&quot;${server.url}&quot;;" />
+		
+		<replace dir="${build.dir}" includes="**/*.java" token="package com.broceliand.pearlbar.chrome.client.">
+			<replacevalue><![CDATA[/*============================================================================
+
+Pearltrees plug-in (extension) Chrome, Copyright(C), 2010-2011, Broceliand SAS,
+Paris, France (company in charge of developing Pearltrees)
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License version 3 as published by the Free
+Software Foundation.
+
+Pearltrees extension for Chrome is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+Pearltrees extension Chrome.
+If not, see <http://www.gnu.org/licenses/>
+
+you can contact us at contact@pearltrees.com
+
+============================================================================*/
+
+package com.broceliand.pearlbar.chrome.client.]]></replacevalue>
+		</replace>
+
+		<copy file="build-public.xml" tofile="${build.dir}/build.xml" />
+		<copy todir="${build.dir}">
+			<fileset dir=".">
+				<include name="*.properties"/>
+			</fileset>
+		</copy>
+
+		<zip destfile="${source.zip}" basedir="${build.dir}">
+			<exclude name="local-build.properties" />
+			<exclude name="${web.module}/**"/>
+		</zip>
+
+		<ant dir="${build.dir}" target="package">
+		</ant>
+	</target>
+
+	<target name="dev" description="Make the dev artefacts">
+		<property name="server.url" value="http://xxx.broceliand.fr/" />
+		<property name="server.url.permissions" value="http://*/" />
+		<property name="server.url.matches" value="http://*/*" />
+		<antcall target="export" />
+	</target>
+
+	<target name="preprod" description="Make the preprod artefacts">
+		<property name="server.url" value="http://org.broceliand.com/" />
+		<antcall target="export" />
+	</target>
+
+	<target name="prod" description="Make the prod artefacts">
+		<property name="server.url" value="http://www.pearltrees.com/" />
+		<antcall target="export" />
+
+		<delete file="${source.zip.oyster}" failonerror="false" />
+		<copy file="${source.zip}" tofile="${source.zip.oyster}"></copy>
+	</target>
+
+</project>
